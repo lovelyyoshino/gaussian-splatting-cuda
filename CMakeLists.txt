@@ -96,10 +96,19 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/includes ${PROJECT_SOURCE_DIR}/cuda_rasterizer ${PROJECT_SOURCE_DIR}/external/tinyply/source)
 
+find_package(PythonInterp REQUIRED)
+# Torch setup
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
+# message(STATUS "Torch CXX Flags: ${TORCH_CXX_FLAGS}")
+# set(Torch_DIR ${TORCH_CXX_FLAGS}/share/cmake/Torch)
+list(APPEND CMAKE_PREFIX_PATH ${TORCH_CXX_FLAGS})
+find_package(Torch REQUIRED)
+find_package(OpenCV REQUIRED)
+find_package(PCL 1.13 REQUIRED)
 
-add_executable(${PROJECT_NAME}   src/main_write.cu ${SOURCES} ${HEADERS})
+add_executable(${PROJECT_NAME}_write   src/main_write.cu ${SOURCES} ${HEADERS})
 
-set_target_properties(${PROJECT_NAME} PROPERTIES
+set_target_properties(${PROJECT_NAME}_write PROPERTIES
         CUDA_ARCHITECTURES native
         CUDA_STANDARD 17
         CUDA_STANDARD_REQUIRED ON
@@ -107,11 +116,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
         CXX_STANDARD_REQUIRED ON
 )
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/includes ${PROJECT_SOURCE_DIR}/cuda_rasterizer ${PROJECT_SOURCE_DIR}/external/tinyply/source)
-
-# Torch setup
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
-find_package(Torch REQUIRED)
+target_include_directories(${PROJECT_NAME}_write PRIVATE ${PROJECT_SOURCE_DIR}/includes ${PROJECT_SOURCE_DIR}/cuda_rasterizer ${PROJECT_SOURCE_DIR}/external/tinyply/source)
 
 # Build options based on CMAKE_BUILD_TYPE
 function(configure_build_type)
@@ -121,8 +126,14 @@ function(configure_build_type)
                 CUDA_RESOLVE_DEVICE_SYMBOLS ON
                 CUDA_SEPARABLE_COMPILATION ON
         )
+        target_compile_options(${PROJECT_NAME}_write PRIVATE -O0 -g -G -Xcompiler -Werror)
+        set_target_properties(${PROJECT_NAME}_write PROPERTIES
+                CUDA_RESOLVE_DEVICE_SYMBOLS ON
+                CUDA_SEPARABLE_COMPILATION ON
+        )
     elseif (CMAKE_BUILD_TYPE STREQUAL "Release")
         target_compile_options(${PROJECT_NAME} PRIVATE -O3 -use_fast_math -Xcompiler -Ofast )
+        target_compile_options(${PROJECT_NAME}_write PRIVATE -O3 -use_fast_math -Xcompiler -Ofast )
     endif ()
 endfunction()
 configure_build_type()
@@ -162,6 +173,23 @@ target_link_libraries(${PROJECT_NAME}
         glm
         Threads::Threads
         args
+)
+
+target_link_libraries(${PROJECT_NAME}_write
+        PRIVATE
+        ${TORCH_LIBRARIES}
+        CUDA::cudart
+        CUDA::curand
+        CUDA::cublas
+        simple-knn
+        tinyply
+        eigen3
+        nlohmann_json::nlohmann_json
+        glm
+        Threads::Threads
+        args
+        ${OpenCV_LIBS}
+        ${PCL_LIBRARIES}
 )
 
 # --------------------------------------

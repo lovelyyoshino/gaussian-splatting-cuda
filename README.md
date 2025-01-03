@@ -80,12 +80,85 @@ post a message in the Discussions section of the repo.
 
 ### Build
 ```bash
-git clone --recursive https://github.com/MrNeRF/gaussian-splatting-cuda
+sudo apt install libtbb-dev
+pip install torch torchvision torchaudio -f https://download.pytorch.org/whl/cu118/torch_stable.html
+
+
+# -----------------------------------------缺少库可选安装------------------------------------------------
+# 安装Eigen
+git clone https://github.com/eigenteam/eigen-git-mirror
+#安装
+cd eigen-git-mirror
+git checkout 3.3.7
+mkdir build && cd build
+cmake .. && sudo make install
+#安装后,头文件安装在/usr/local/include/eigen3/
+#移动头文件
+sudo cp -r /usr/local/include/eigen3/Eigen /usr/local/include 
+cd ../../
+
+# 安装nlohmann-json
+sudo apt-update
+sudo apt-get install nlohmann-json3-dev
+
+# 安装glm
+sudo apt-get update
+sudo apt-get install libglm-dev
+
+
+#安装opencv
+mkdir -p opencv \
+ && cd opencv \
+ && git clone https://github.com/opencv/opencv.git \
+ && git clone https://github.com/opencv/opencv_contrib.git \
+ && cd opencv \
+ && git checkout 4.4.0 \
+ && cd ../opencv_contrib \
+ && git checkout 4.4.0 \
+ && cd ../../
+
+# Build opencv，contrib需要对应ceres版本
+sudo apt-get install build-essential pkg-config libgtk2.0-dev libavcodec-dev libavformat-dev libjpeg-dev libswscale-dev libtiff5-dev
+mkdir -p opencv/opencv/build \
+	&& mkdir -p opencv/opencv/install\
+	&& cd opencv/opencv/build \
+ && cmake -D CMAKE_BUILD_TYPE=RELEASE \
+   -D CMAKE_INSTALL_PREFIX=/usr/local \
+   -D INSTALL_C_EXAMPLES=ON \
+   -D INSTALL_PYTHON_EXAMPLES=ON \
+   -D OPENCV_GENERATE_PKGCONFIG=ON \
+   -D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib/modules \
+   -D BUILD_EXAMPLES=ON .. \
+   -D BUILD_opencv_xfeatures2d=OFF ..  \
+   -DBUILD_TESTS=OFF \
+   -DWITH_FFMPEG=OFF 
+ && make -j16 \
+ && sudo make install \
+ && cd ../../
+
+
+# 安装PCL
+sudo apt-get install libboost-all-dev libgl1-mesa-dev libglu1-mesa-dev  libflann-dev
+git clone https://github.com/PointCloudLibrary/pcl.git
+cd pcl
+git checkout pcl-1.13.0
+mkdir build && cd build
+cmake -DCMAKE_BUILD_TYPE=None -DCMAKE_INSTALL_PREFIX=/usr/local \
+           -DBUILD_GPU=OFF -DBUILD_apps=OFF -DBUILD_examples=OFF \
+           -DCMAKE_INSTALL_PREFIX=/usr/local ..
+make -j16
+sudo make install
+cd ../../
+# -----------------------------------------缺少库可选安装------------------------------------------------
+
+
+
+git clone --recursive https://github.com/lovelyyoshino/gaussian-splatting-cuda
 cd gaussian-splatting-cuda
 wget https://download.pytorch.org/libtorch/cu118/libtorch-cxx11-abi-shared-with-deps-2.0.1%2Bcu118.zip  
 unzip  libtorch-cxx11-abi-shared-with-deps-2.0.1+cu118.zip -d external/
 rm libtorch-cxx11-abi-shared-with-deps-2.0.1+cu118.zip
-cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DTORCH_CXX_FLAGS=/gaussian-splatting-cuda/external/libtorch
 cmake --build build -- -j
 ```
 

@@ -4,6 +4,8 @@
 #include <filesystem>
 #include <point_cloud.cuh>
 #include <image.cuh>
+#include <camera_info.cuh>
+
 #include <opencv2/opencv.hpp>
 #include <Eigen/Dense>
 #include <pcl/point_cloud.h>
@@ -12,7 +14,7 @@
 
 using PointCloudXYZRGB = pcl::PointCloud<pcl::PointXYZRGB>;
 
-std::unordered_map<int, std::pair<CAMERA_MODEL, uint32_t>> camera_model_ids = {
+std::unordered_map<int, std::pair<CAMERA_MODEL, uint32_t>> write_camera_model_ids = {
     {0, {CAMERA_MODEL::SIMPLE_PINHOLE, 3}},
     {1, {CAMERA_MODEL::PINHOLE, 4}},
     {2, {CAMERA_MODEL::SIMPLE_RADIAL, 4}},
@@ -26,6 +28,10 @@ std::unordered_map<int, std::pair<CAMERA_MODEL, uint32_t>> camera_model_ids = {
     {10, {CAMERA_MODEL::THIN_PRISM_FISHEYE, 12}},
     {11, {CAMERA_MODEL::UNDEFINED, -1}}};
 
+struct Track {
+    uint32_t _image_ID;
+    uint32_t _max_num_2D_points;
+};
 
 // 保存图像数据的函数
 void save_images(const std::filesystem::path& file_path, const std::vector<std::pair<cv::Mat,int>>& images, const std::vector<Eigen::Matrix4d>& poses) {
@@ -120,8 +126,8 @@ void save_cameras(const std::filesystem::path& file_path,
         // 写入图像尺寸
         output_stream.write(reinterpret_cast<const char*>(&width), sizeof(width));
         output_stream.write(reinterpret_cast<const char*>(&height), sizeof(height));
-        CAMERA_MODEL camera_model  = std::get<0>(camera_model_ids[model_id]);
-        uint32_t camera_model_id = std::get<1>(camera_model_ids[model_id]);
+        CAMERA_MODEL camera_model  = std::get<0>(write_camera_model_ids[model_id]);
+        uint32_t camera_model_id = std::get<1>(write_camera_model_ids[model_id]);
         output_stream.write(reinterpret_cast<const char*>(&camera_model), sizeof(camera_model));
         output_stream.write(reinterpret_cast<const char*>(&camera_model_id), sizeof(camera_model_id));
         // 写入参数
