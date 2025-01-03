@@ -61,7 +61,6 @@ set(HEADERS
 )
 
 set(SOURCES
-        src/main.cu
         src/read_utils.cu
         src/gaussian.cu
         src/camera.cu
@@ -85,7 +84,20 @@ set_source_files_properties(src/utils.cu PROPERTIES COMPILE_FLAGS "-Xcudafe --di
 # Project target
 # --------------------------------------
 
-add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
+add_executable(${PROJECT_NAME}   src/main.cu ${SOURCES} ${HEADERS})
+
+set_target_properties(${PROJECT_NAME} PROPERTIES
+        CUDA_ARCHITECTURES native
+        CUDA_STANDARD 17
+        CUDA_STANDARD_REQUIRED ON
+        CXX_STANDARD 17
+        CXX_STANDARD_REQUIRED ON
+)
+
+target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/includes ${PROJECT_SOURCE_DIR}/cuda_rasterizer ${PROJECT_SOURCE_DIR}/external/tinyply/source)
+
+
+add_executable(${PROJECT_NAME}   src/main_write.cu ${SOURCES} ${HEADERS})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
         CUDA_ARCHITECTURES native
